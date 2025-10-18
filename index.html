@@ -6,7 +6,7 @@
     <title>Greenery - Collaborative Travel Platform</title>
     <!-- Load Tailwind CSS -->
     <script src="https://cdn.tailwindcss.com"></script>
-    <!-- Load Font Awesome for Icons (for social buttons and bus) -->
+    <!-- Load Font Awesome for Icons (for social buttons and menu) -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css" />
     
     <style>
@@ -141,109 +141,6 @@
         .title-animation {
             animation: beat 2s infinite ease-in-out;
         }
-        
-        /* --- BUS WELCOME ANIMATION STYLES --- */
-        #initial-loader {
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background-color: var(--color-secondary);
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            justify-content: center;
-            z-index: 100;
-            overflow: hidden;
-        }
-
-        /* NEW: REALISTIC VERTICAL ROAD CONTAINER */
-        .road-container {
-            position: absolute; 
-            bottom: -50%; /* Start road well below the view */
-            left: 50%;
-            width: 80px; /* Wide road */
-            height: 150%; /* Long vertical travel path */
-            background-color: #4b5563; /* Dark gray road color */
-            transform: translateX(-50%); 
-            z-index: 101; 
-            
-            /* Yellow side borders */
-            border-left: 8px solid #fcd34d; 
-            border-right: 8px solid #fcd34d; 
-            box-sizing: border-box;
-        }
-        
-        .road-container::before {
-            content: '';
-            position: absolute;
-            top: 0;
-            left: 50%;
-            width: 4px; /* Dashes in the middle of the vertical road */
-            height: 100%;
-            background-image: linear-gradient(to bottom, #e5e7eb 50%, transparent 50%); /* White dashed line */
-            background-size: 4px 50px; 
-            transform: translateX(-50%);
-            animation: road-move-vertical 0.2s linear infinite; 
-        }
-        
-        @keyframes road-move-vertical {
-            to {
-                background-position: 0 50px;
-            }
-        }
-
-        /* --- BUS ICON AND TRAVEL ANIMATION (VERTICAL) --- */
-        .bus-icon {
-            position: absolute;
-            left: 50%; 
-            bottom: -150px; /* Start far off-screen bottom */
-            font-size: 60px; 
-            color: var(--color-primary);
-            z-index: 103; 
-            
-            /* Bus is UN-ROTATED and moves vertically */
-            transform: translateX(-50%) scale(1); 
-            
-            /* Total time 5s: 4.5s travel + 0.5s flash */
-            animation: 
-                vertical-travel 4.5s forwards ease-out, 
-                strong-headlight 0.15s 4.5s 4 alternate; /* Blinks 4 times (2 demands) starting at 4.5s */
-            animation-fill-mode: forwards;
-        }
-        
-        @keyframes vertical-travel {
-            0% { bottom: -150px; transform: translateX(-50%) scale(1); }
-            /* Stop point is near the center of the viewport, below the text */
-            90% { bottom: 50%; transform: translateX(-50%) scale(1); } 
-            100% { bottom: 50%; transform: translateX(-50%) scale(1); opacity: 0; } /* Hold position during flash, then disappear */
-        }
-        
-        /* Headlight Animation (Applied to the icon itself) */
-        @keyframes strong-headlight {
-            0% { color: var(--color-primary); text-shadow: none; opacity: 1; }
-            100% { color: yellow; text-shadow: 0 0 15px yellow, 0 0 25px orange; opacity: 1; }
-        }
-        
-        /* Transition for the Login Page */
-        .login-zoom {
-            animation: zoomIn 0.8s forwards cubic-bezier(0.2, 0.8, 0.4, 1.2);
-            opacity: 0;
-            transform: scale(0.8);
-            animation-delay: 0.2s; 
-        }
-        @keyframes zoomIn {
-            0% { opacity: 0; transform: scale(0.8); }
-            100% { opacity: 1; transform: scale(1); }
-        }
-
-        /* Styling for the new floating price card */
-        .price-card {
-            position: sticky;
-            top: 80px; /* Below the header */
-            z-index: 20;
-        }
     </style>
 </head>
 <body class="flex flex-col min-h-screen">
@@ -289,7 +186,7 @@
     <div id="sidebar-overlay" class="fixed inset-0 bg-black bg-opacity-50 hidden z-40" onclick="closeSidebar()"></div>
 
     <!-- Main Content Area -->
-    <div id="main-content-area" class="flex-1 transition-all duration-300 hidden">
+    <div id="main-content-area" class="flex-1 transition-all duration-300">
         
         <!-- Top Navbar/Header -->
         <header class="bg-white shadow-md p-4 lg:p-6 sticky top-0 z-30 flex items-center justify-between">
@@ -330,17 +227,8 @@
         </div>
     </div>
     
-    <!-- CUSTOM WELCOME ANIMATION -->
-    <div id="initial-loader" class="bg-emerald-50">
-         <h1 class="text-6xl font-extrabold text-emerald-700 mb-2">Greenery</h1>
-         <p class="text-lg text-gray-600 mb-8">Preparing your adventure...</p>
-         
-         <!-- Vertical Road (The actual road) -->
-         <div class="road-container"></div>
-         
-         <!-- Bus icon is positioned absolutely on the screen, moving vertically -->
-         <i class="fas fa-bus-simple bus-icon"></i> 
-    </div>
+    <!-- CUSTOM WELCOME ANIMATION (REMOVED) -->
+    <div id="initial-loader" class="hidden"></div>
 
 
     <!-- START OF JAVASCRIPT AND FIREBASE INTEGRATION -->
@@ -374,7 +262,7 @@
         let userName = 'Guest';
         
         const state = {
-            currentPage: 'loading', // Start on the loading screen now
+            currentPage: 'home', // START DIRECTLY ON HOME PAGE
             selectedTripId: null,     
             currentRoomId: null,      
             currentRoomData: null,    
@@ -416,18 +304,11 @@
             const firebaseConfig = typeof __firebase_config !== 'undefined' ? JSON.parse(__firebase_config) : null;
             let config = firebaseConfig || FALLBACK_FIREBASE_CONFIG;
 
-            // 1. Play bus animation and wait for 5 seconds total (travel + flash)
-            await new Promise(r => setTimeout(r, 5000)); 
-            
-            // 2. Hide bus loader and show main app structure
-            document.getElementById('initial-loader').classList.add('hidden');
+            // 1. Skip animation and load UI immediately
             document.getElementById('main-content-area').classList.remove('hidden');
-
-            // 3. Force the Home (Login) view to render with the zoom animation class
-            state.currentPage = 'home';
-            renderApp(true); // Pass true to enable zoom animation class
+            renderApp(); 
             
-            // 4. Initialize Firebase in the background
+            // 2. Initialize Firebase in the background
             try {
                 const app = initializeApp(config);
                 db = getFirestore(app);
@@ -952,7 +833,7 @@
             // Handle active class for navigation
             document.querySelectorAll('.nav-link').forEach(link => {
                 const linkPageMatch = link.getAttribute('onclick').match(/changeView\('([^']+)'/);
-                const linkPage = linkPageMatch ? linkPage[1] : null;
+                const linkPage = linkPageMatch ? linkPageMatch[1] : null; 
                 if (linkPage === state.currentPage) {
                     link.classList.add('bg-emerald-50');
                 } else {
@@ -986,10 +867,10 @@
             // Render Main Content
             switch (state.currentPage) {
                 case 'loading':
-                    // We render the HTML outside the content container
+                    // This is only a fallback, the main page loads directly
                     break;
                 case 'home':
-                    // Pass the zoom flag to the home render function
+                    // Render Home (Login Page)
                     document.getElementById('content-container').innerHTML = renderHomePage(withZoom);
                     break;
                 case 'dashboard':
